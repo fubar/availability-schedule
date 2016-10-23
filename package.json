@@ -1,0 +1,36 @@
+{
+  "name": "availability-schedule",
+  "version": "1.0.0",
+  "description": "A simple availability schedule library",
+  "main": "lib/AvailabilitySchedule.es6",
+  "scripts": {
+    "prepublish": "npm test",
+    "test": "mocha ./test/AvailabilitySchedule-test.es6"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fubar/availability-schedule.git"
+  },
+  "keywords": [
+    "availability",
+    "schedule",
+    "date",
+    "time",
+    "ranges",
+    "es6"
+  ],
+  "author": "Philipp Gebauer <fubar@phil-g.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/fubar/availability-schedule/issues"
+  },
+  "homepage": "https://github.com/fubar/availability-schedule#readme",
+  "dependencies": {
+    "moment": "^2.15.1",
+    "moment-range": "^2.2.0"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.1.2"
+  }
+}
