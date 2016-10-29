@@ -2,6 +2,7 @@
 
 const moment = require('moment');
 const DateRange = require('moment-range'); // eslint-disable-line no-unused-vars
+require('moment-recur');
 
 /**
  * @class AvailabilitySchedule
@@ -13,9 +14,17 @@ const DateRange = require('moment-range'); // eslint-disable-line no-unused-vars
  */
 class AvailabilitySchedule {
 
+  /** @member {Date} AvailabilitySchedule#startDate */
+  /** @member {Date} AvailabilitySchedule#endDate */
   /** @member {DateRange[]} AvailabilitySchedule#availabilities */
 
-  constructor () {
+  /**
+   * @param {string} startDate Start date of the schedule as an ISO 8601 string
+   * @param {string} endDate End date of the schedule as an ISO 8601 string
+   */
+  constructor (startDate, endDate) {
+    this.startDate = new Date(startDate);
+    this.endDate = new Date(endDate);
     this.availabilities = [];
   }
 
@@ -101,35 +110,90 @@ class AvailabilitySchedule {
   /**
    * Adds an available time range
    *
-   * @param {Date} date
-   * @param {number} duration in minutes
+   * @param {string} startDate ISO 8601 string
+   * @param {string} endDate ISO 8601 string
    */
-  addAvailability (date, duration) {
+  addAvailability (startDate, endDate) {
+
+    let momentStartUtc = moment(startDate).utc(); // equivalent to new Date(startDate)
+    let momentEndUtc = moment(endDate).utc();
+
+    if (momentEndUtc.toDate() <= this.startDate || momentStartUtc.toDate() >= this.endDate) {
+      return;
+    }
     this.availabilities.push(
-      moment.range(
-        moment(date),
-        moment(date).add(duration, 'minutes')
-      )
+      moment.range(momentStartUtc, momentEndUtc)
     );
     this.normalize();
   }
 
 
-  // todo addRecurringAvailability(RecurringAvailability): same as above, but for each recurrence
+  /**
+   * Adds an available time range and repeats it on the given weekdays
+   *
+   * @param {string} startDate ISO 8601 string
+   * @param {string} endDate ISO 8601 string
+   * @param {number[]} repeatWeekdays Array of integers that indicate the weekdays on which the availability is repeated. 1 = Mon, 7 = Sun (in the same time zone as startDate).
+   */
+  addWeeklyRecurringAvailability (startDate, endDate, repeatWeekdays) {
+
+    this.addAvailability(startDate, endDate);
+
+    if (!Array.isArray(repeatWeekdays)) {
+      return;
+    }
+    repeatWeekdays = repeatWeekdays.filter(weekday => Number.isInteger(weekday) && weekday >= 0 && weekday <= 7);
+    if (!repeatWeekdays.length) {
+      return;
+    }
+    let momentStartUtc = moment(startDate).utc(); // equivalent to new Date(startDate)
+    let momentEndUtc = moment(endDate).utc();
+
+    if (momentEndUtc <= momentStartUtc) {
+      return;
+    }
+    let durationInMinutes = moment.range(momentStartUtc, momentEndUtc).diff('minutes');
+
+    /**
+     * By default, moment shifts the date to the local computer's timezone (go figure).
+     * utcOffset() shifts the date to a given timezone and is able to extract the offset from a full time stamp.
+     */
+    let momentInTimezone = moment(startDate).utcOffset(startDate);
+    let utcWeekdayDifference = momentInTimezone.isoWeekday() - momentStartUtc.isoWeekday();
+
+    let repeatWeekdaysInUtc = repeatWeekdays
+      .map(weekday => weekday - utcWeekdayDifference)
+      .map(weekday => weekday % 7) // enforces range -6..6
+      .map(weekday => weekday < 1 ? weekday + 7 : weekday); // enforces range 1..7
+
+    let recurrenceStart = momentStartUtc.toDate() > this.startDate ? momentStartUtc.toDate() : this.startDate;
+
+    moment()
+      .recur(moment(recurrenceStart).utc(), moment(this.endDate).utc())
+      .every(repeatWeekdaysInUtc).daysOfWeek()
+      .all()
+      .map(date => {
+        return date
+          .set('hour', momentStartUtc.get('hour'))
+          .set('minute', momentStartUtc.get('minute'));
+      })
+      .map(date => moment.range(date, date.clone().add(durationInMinutes, 'minutes')))
+      .filter(range => range.end.toDate() > this.startDate && range.start.toDate() < this.endDate)
+      .map(range => this.availabilities.push(range));
+
+    this.normalize();
+  }
 
 
   /**
    * Removes a time range from any existing availabilities
    *
-   * @param {Date} date
-   * @param {number} duration in minutes
+   * @param {string} startDate ISO 8601 string
+   * @param {string} endDate ISO 8601 string
    */
-  removeAvailability (date, duration) {
+  removeAvailability (startDate, endDate) {
 
-    var range = moment.range(
-      moment(date),
-      moment(date).add(duration, 'minutes')
-    );
+    let range = moment.range(moment(startDate).utc(), moment(endDate).utc());
 
     /** @type {DateRange[]} */
     let remainders = [];
@@ -145,7 +209,7 @@ class AvailabilitySchedule {
    * Returns all availabilities as tuples of Dates [start, end] in chronological order.
    *
    * todo limit length of returned schedule
-   * @returns {Array.<String>} An array of Date tuples like [Date(2000-01-01T00:00:00.000Z), Date(2000-01-01T00:30:00.000Z)]
+   * @returns {Array.<Array.<Date>>} An array of Date tuples like [Date(2000-01-01T00:00:00.000Z), Date(2000-01-01T00:30:00.000Z)]
    */
   getAvailabilities () {
     return this.availabilities.map(availability => {
@@ -157,16 +221,13 @@ class AvailabilitySchedule {
   /**
    * Returns true if the given time range falls within any availability.
    *
-   * @param {Date} date
-   * @param {number} duration in minutes
+   * @param {string} startDate ISO 8601 string
+   * @param {string} endDate ISO 8601 string
    * @returns {boolean}
    */
-  isAvailable (date, duration) {
+  isAvailable (startDate, endDate) {
 
-    var range = moment.range(
-      moment(date),
-      moment(date).add(duration, 'minutes')
-    );
+    let range = moment.range(moment(startDate).utc(), moment(endDate).utc());
 
     return !!this.availabilities.find(availability => {
       return range.start.within(availability) && range.end.within(availability);
