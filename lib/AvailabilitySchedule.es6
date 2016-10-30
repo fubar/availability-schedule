@@ -137,6 +137,15 @@ class AvailabilitySchedule {
    */
   addWeeklyRecurringAvailability (startDate, endDate, repeatWeekdays) {
 
+    let momentStartUtc = moment(startDate).utc(); // equivalent to new Date(startDate)
+    let momentEndUtc = moment(endDate).utc();
+
+    if (momentEndUtc <= momentStartUtc) {
+      return;
+    }
+    if (momentStartUtc.toDate() >= this.endDate) {
+      return;
+    }
     this.addAvailability(startDate, endDate);
 
     if (!Array.isArray(repeatWeekdays)) {
@@ -144,12 +153,6 @@ class AvailabilitySchedule {
     }
     repeatWeekdays = repeatWeekdays.filter(weekday => Number.isInteger(weekday) && weekday >= 0 && weekday <= 7);
     if (!repeatWeekdays.length) {
-      return;
-    }
-    let momentStartUtc = moment(startDate).utc(); // equivalent to new Date(startDate)
-    let momentEndUtc = moment(endDate).utc();
-
-    if (momentEndUtc <= momentStartUtc) {
       return;
     }
     let durationInMinutes = moment.range(momentStartUtc, momentEndUtc).diff('minutes');
@@ -166,16 +169,16 @@ class AvailabilitySchedule {
       .map(weekday => weekday % 7) // enforces range -6..6
       .map(weekday => weekday < 1 ? weekday + 7 : weekday); // enforces range 1..7
 
-    let recurrenceStart = momentStartUtc.toDate() > this.startDate ? momentStartUtc.toDate() : this.startDate;
-
     moment()
-      .recur(moment(recurrenceStart).utc(), moment(this.endDate).utc())
+      .recur(moment(momentStartUtc.toDate()).utc(), moment(this.endDate).utc())
       .every(repeatWeekdaysInUtc).daysOfWeek()
       .all()
       .map(date => {
+        // moment-recur discards of time information. add it back
         return date
           .set('hour', momentStartUtc.get('hour'))
-          .set('minute', momentStartUtc.get('minute'));
+          .set('minute', momentStartUtc.get('minute'))
+          .set('second', momentStartUtc.get('second'));
       })
       .map(date => moment.range(date, date.clone().add(durationInMinutes, 'minutes')))
       .filter(range => range.end.toDate() > this.startDate && range.start.toDate() < this.endDate)
@@ -206,20 +209,23 @@ class AvailabilitySchedule {
 
 
   /**
-   * Returns all availabilities as tuples of Dates [start, end] in chronological order.
+   * Returns all availabilities as tuples of date strings [start, end] in chronological order
    *
-   * todo limit length of returned schedule
-   * @returns {Array.<Array.<Date>>} An array of Date tuples like [Date(2000-01-01T00:00:00.000Z), Date(2000-01-01T00:30:00.000Z)]
+   * @param {String} timezone Accepts just the timezone offset such as "-05:00" as well as a full time stamp that includes the offset (e.g. "2000-01-01T00:00:00-04:00")
+   * @returns {Array.<Array.<String>>} An array of ISO 8601 string tuples like [2000-01-01T00:00:00Z, 2000-01-01T00:30:00Z]
    */
-  getAvailabilities () {
+  getAvailabilities (timezone = '+0000') {
     return this.availabilities.map(availability => {
-      return availability.toDate();
+      return [
+        availability.start.utcOffset(timezone).format(),
+        availability.end.utcOffset(timezone).format()
+      ];
     });
   }
 
 
   /**
-   * Returns true if the given time range falls within any availability.
+   * Returns true if the given time range falls within any availability
    *
    * @param {string} startDate ISO 8601 string
    * @param {string} endDate ISO 8601 string
