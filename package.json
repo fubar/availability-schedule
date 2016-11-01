@@ -28,7 +28,7 @@
   "dependencies": {
     "moment": "^2.15.1",
     "moment-range": "^2.2.0",
-    "moment-recur": "^1.0.5"
+    "moment-recur": "git+https://github.com/fubar/moment-recur-npm.git"
   },
   "devDependencies": {
     "chai": "^3.5.0",
