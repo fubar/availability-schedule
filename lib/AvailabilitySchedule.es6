@@ -209,17 +209,17 @@ class AvailabilitySchedule {
 
 
   /**
-   * Returns all availabilities as tuples of date strings [start, end] in chronological order
+   * Returns all availabilities as an array of {start: date string, end: date string} objects in chronological order
    *
    * @param {String} timezone Accepts just the timezone offset such as "-05:00" as well as a full time stamp that includes the offset (e.g. "2000-01-01T00:00:00-04:00")
-   * @returns {Array.<Array.<String>>} An array of ISO 8601 string tuples like [2000-01-01T00:00:00Z, 2000-01-01T00:30:00Z]
+   * @returns {Array.<{start: string, end: string}>} An array of objects with ISO 8601 date strings like {start: '2000-01-01T00:00:00Z', end: '2000-01-01T00:30:00Z'}
    */
   getAvailabilities (timezone = '+0000') {
     return this.availabilities.map(availability => {
-      return [
-        availability.start.utcOffset(timezone).format(),
-        availability.end.utcOffset(timezone).format()
-      ];
+      return {
+        start: availability.start.utcOffset(timezone).format(),
+        end: availability.end.utcOffset(timezone).format()
+      };
     });
   }
 
