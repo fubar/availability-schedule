@@ -2,7 +2,7 @@
 
 const moment = require('moment');
 const DateRange = require('moment-range'); // eslint-disable-line no-unused-vars
-require('moment-recur');
+require('moment-recur-npm');
 
 /**
  * @class AvailabilitySchedule
@@ -90,6 +90,15 @@ class AvailabilitySchedule {
     let normalized = [];
 
     this.availabilities.map(availability => {
+
+      // trim availabilities that overlap at the start or end of the schedule
+      if (availability.start.toDate() < this.startDate) {
+        availability = moment.range(this.startDate, availability.end);
+      }
+      if (availability.end.toDate() > this.endDate) {
+        availability = moment.range(availability.start, this.endDate);
+      }
+
       // combine overlapping (includes identical ranges which remain unchanged)
       let indexOverlapping = this.findIndexOfOverlappingRange(normalized, availability);
       if (indexOverlapping > -1) {
