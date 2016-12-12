@@ -2,7 +2,7 @@
   "name": "availability-schedule",
   "version": "1.0.0",
   "description": "A simple availability schedule library",
-  "main": "lib/AvailabilitySchedule.es6",
+  "main": "lib/AvailabilitySchedule.js",
   "scripts": {
     "compile": "babel -d lib/ src/ --presets es2015",
     "prepublish": "npm run compile",
