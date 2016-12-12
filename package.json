@@ -1,6 +1,6 @@
 {
   "name": "availability-schedule",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A simple availability schedule library",
   "main": "lib/AvailabilitySchedule.js",
   "scripts": {
@@ -15,6 +15,7 @@
   "keywords": [
     "availability",
     "schedule",
+    "calendar",
     "date",
     "time",
     "ranges"
@@ -26,7 +27,7 @@
   },
   "homepage": "https://github.com/fubar/availability-schedule#readme",
   "dependencies": {
-    "moment": "^2.15.1",
+    "moment": "2.x",
     "moment-range": "^2.2.0",
     "moment-recur-npm": "^1.0.1"
   },
