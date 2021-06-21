@@ -3,6 +3,7 @@
   "version": "1.0.2",
   "description": "A simple availability schedule library",
   "main": "lib/AvailabilitySchedule.js",
+  "types": "./index.d.ts",
   "scripts": {
     "compile": "babel -d lib/ src/ --presets es2015",
     "prepublish": "npm run compile",
