@@ -6,12 +6,28 @@ A simple availability schedule library for JS
 npm install availability-schedule --save
 ```
 
+## Import
+
+```javascript
+const AvailabilitySchedule = require('availability-schedule');
+```
+
+For TypeScript:
+
+```ts
+import AvailabilitySchedule = require('availability-schedule');
+```
+
+If that throws an error (e.g. `TS1202: Import assignment cannot be used when targeting ECMAScript modules`), try a regular import statement:
+
+```ts
+import AvailabilitySchedule from 'availability-schedule';
+```
+
 ## Usage
 
 ```javascript
-var AvailabilitySchedule = require('availability-schedule');
-
-var schedule = new AvailabilitySchedule('2017-01-09T00:00:00Z', '2017-01-16T00:00:00Z'); // Second week of Jan 2017
+const schedule = new AvailabilitySchedule('2017-01-09T00:00:00Z', '2017-01-16T00:00:00Z'); // Second week of Jan 2017
 schedule.addWeeklyRecurringAvailability('2017-01-04T09:00:00Z', '2017-01-04T17:00:00Z', [1, 2, 3, 4, 5]); // Mon-Fri 9am-5pm UTC, starting on Wed Jan 4th
 schedule.addAvailability('2017-01-14T12:00:00Z', '2017-01-14T15:00:00Z'); // Sat Jan 14 12pm-3pm UTC
 
