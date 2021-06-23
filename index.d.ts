@@ -49,7 +49,7 @@ declare class AvailabilitySchedule {
 
     /**
      * Returns all availabilities in chronological order.
-     * @param timezone Defaults to '+0000'
+     * @param timezone Accepts just the timezone offset such as "-05:00" as well as a full time stamp that includes the offset (e.g. "2000-01-01T00:00:00-04:00"). Defaults to '+0000'
      */
     getAvailabilities(timezone?: string): Availability[]
 
