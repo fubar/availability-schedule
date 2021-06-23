@@ -62,6 +62,5 @@ declare class AvailabilitySchedule {
 }
 
 declare module 'availability-schedule' {
-    const AvailabilitySchedule: AvailabilitySchedule
     export = AvailabilitySchedule
 }
